@@ -1,0 +1,62 @@
+version: '3'
+services:
+  postgres:
+    image: 'postgres:alpine'
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - '3080:5432'
+  redis:
+    image: 'redis:alpine'
+    restart: unless-stopped
+    volumes:
+      - ./redis-data:/data
+  nginx:
+    depends_on:
+      - api
+      - front
+    restart: unless-stopped
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - '3050:80'
+  front:
+    stdin_open: true
+    restart: unless-stopped
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./front
+    volumes:
+      - /app/node_modules
+      - ./front:/app
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./api
+    restart: unless-stopped
+    volumes:
+      - /app/node_modules
+      - ./api:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DATABASE=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=5432
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    restart: unless-stopped
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
