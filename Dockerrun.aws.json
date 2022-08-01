@@ -35,7 +35,7 @@
       ],
       "links": [
         "front",
-        "server"
+        "api"
       ],
       "memory": 128
     }
